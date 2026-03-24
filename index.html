@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OAT Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inconsolata:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e0e;
+  --s1: #161616;
+  --s2: #1e1e1e;
+  --s3: #282828;
+  --border: #2e2e2e;
+  --text: #f2ede6;
+  --muted: #666;
+  --dim: #3a3a3a;
+  --accent: #f0c040;
+  --red: #e05c40;
+  --green: #4caf78;
+  --blue: #5b9cf6;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inconsolata', monospace;
+  min-height: 100vh;
+}
+
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 18px 80px; }
+
+/* HEADER */
+header {
+  padding: 36px 0 22px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 38px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+h1 span { color: var(--accent); }
+
+.header-right {
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.header-right strong {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  color: var(--text);
+  display: block;
+  line-height: 1;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 3px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px;
+  margin-bottom: 28px;
+}
+
+.tab {
+  flex: 1;
+  padding: 9px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.tab.active { background: var(--accent); color: #000; font-weight: 600; }
+.tab:hover:not(.active) { color: var(--text); }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* STAGE INDICATOR */
+.stage-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.stage-pip {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--dim);
+  transition: background 0.3s;
+}
+.stage-pip.active { background: var(--accent); }
+.stage-pip.done { background: var(--green); }
+
+.stage-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stage-label span { color: var(--accent); }
+
+/* DRILL CARD */
+.drill-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 14px;
+}
+
+.card-eyebrow {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* OBSERVATION DISPLAY */
+.observation-box {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  min-height: 64px;
+}
+
+.obs-context {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+/* TIMER */
+.timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.timer-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.timer-ring svg {
+  transform: rotate(-90deg);
+  width: 64px;
+  height: 64px;
+}
+
+.timer-ring circle {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.ring-bg { stroke: var(--dim); }
+.ring-fill {
+  stroke: var(--accent);
+  stroke-dasharray: 163;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s;
+}
+
+.timer-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--accent);
+  transition: color 0.3s;
+}
+
+.timer-info { flex: 1; }
+
+.timer-phase {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.timer-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* INPUT */
+.input-field {
+  width: 100%;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--dim); font-style: italic; }
+
+.input-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--dim);
+  color: var(--muted);
+}
+
+.step-dot.obs { background: rgba(240,192,64,0.15); color: var(--accent); }
+.step-dot.ass { background: rgba(91,156,246,0.15); color: var(--blue); }
+.step-dot.tease { background: rgba(224,92,64,0.15); color: var(--red); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 20px;
+  border-radius: 5px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-weight: 600;
+}
+
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #f5ce55; transform: translateY(-1px); }
+
+.btn-ghost { background: none; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--dim); }
+
+.btn-danger { background: rgba(224,92,64,0.1); color: var(--red); border: 1px solid rgba(224,92,64,0.2); }
+.btn-danger:hover { background: rgba(224,92,64,0.2); }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* RATING STARS */
+.stars-row {
+  display: flex;
+  gap: 5px;
+  margin: 16px 0 8px;
+  align-items: center;
+}
+
+.star {
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--dim);
+  transition: all 0.1s;
+  user-select: none;
+}
+
+.star.lit { color: var(--accent); }
+.star:hover { transform: scale(1.2); }
+
+.rating-desc {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 8px;
+}
+
+/* EXAMPLE REVEAL */
+.example-reveal {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.example-toggle {
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.example-toggle:hover { color: var(--text); }
+
+.example-content {
+  display: none;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.example-content.open { display: block; }
+
+.example-line {
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #aaa;
+  border-bottom: 1px solid var(--border);
+}
+
+.example-line:last-child { border: none; }
+.example-line strong { color: var(--text); font-weight: 400; }
+.example-line em { color: var(--accent); font-style: normal; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* LOG ENTRIES */
+.entry {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  position: relative;
+  animation: fadein 0.2s ease;
+}
+
+@keyframes fadein { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+.entry-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.entry-stars { font-size: 13px; letter-spacing: 1px; margin-bottom: 3px; }
+
+.entry-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+
+.etag {
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.etag.stage1 { color: var(--accent); border-color: rgba(240,192,64,0.3); background: rgba(240,192,64,0.07); }
+.etag.stage2 { color: var(--blue); border-color: rgba(91,156,246,0.3); background: rgba(91,156,246,0.07); }
+.etag.stage3 { color: var(--red); border-color: rgba(224,92,64,0.3); background: rgba(224,92,64,0.07); }
+.etag.stage4 { color: var(--green); border-color: rgba(76,175,120,0.3); background: rgba(76,175,120,0.07); }
+
+.entry-time { font-size: 10px; color: var(--muted); flex-shrink: 0; margin-top: 2px; }
+
+.entry-obs { font-size: 12px; color: #aaa; line-height: 1.5; font-style: italic; margin-bottom: 4px; }
+
+.entry-response {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.entry-part { font-size: 11px; line-height: 1.4; }
+.entry-part-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.entry-note { font-size: 12px; color: #999; line-height: 1.5; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-style: italic; }
+
+.entry-del {
+  position: absolute; top: 10px; right: 10px;
+  background: none; border: none;
+  color: var(--dim); cursor: pointer; font-size: 14px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.entry:hover .entry-del { opacity: 1; }
+.entry-del:hover { color: var(--red); }
+
+/* STATS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--text);
+}
+
+.stat-num.yellow { color: var(--accent); }
+.stat-num.green { color: var(--green); }
+
+.stat-lbl {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* MINI CHART */
+.mini-chart {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.chart-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bar-name {
+  font-size: 10px;
+  color: var(--muted);
+  width: 90px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--dim);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.5s ease;
+}
+
+.bar-count {
+  font-size: 10px;
+  color: var(--muted);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* EMPTY */
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 2;
+}
+
+.empty strong { display: block; font-family: 'Syne', sans-serif; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  transition: transform 0.3s ease;
+  z-index: 999;
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* PROGRESS STEPS */
+.progress-steps {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.pstep {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: relative;
+}
+
+.pstep:first-child { border-radius: 5px 0 0 5px; }
+.pstep:last-child { border-radius: 0 5px 5px 0; }
+.pstep + .pstep { border-left: none; }
+
+.pstep.current { background: var(--s2); color: var(--accent); border-color: var(--accent); z-index: 1; }
+.pstep:hover:not(.current) { color: var(--text); background: var(--s2); }
+
+.pstep-num {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  display: block;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>O<span>A</span>T</h1>
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:4px;">OBSERVATION · ASSUMPTION · TEASE</div>
+  </div>
+  <div class="header-right">
+    <strong id="total-reps">0</strong>
+    TOTAL REPS
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('drill',this)">Drill</button>
+  <button class="tab" onclick="showTab('log',this)">Rep Log</button>
+  <button class="tab" onclick="showTab('stats',this)">Stats</button>
+</div>
+
+<!-- DRILL TAB -->
+<div id="tab-drill" class="section active">
+
+  <div class="progress-steps" id="stage-steps">
+    <div class="pstep current" onclick="setStage(1,this)"><span class="pstep-num">1</span>Observe</div>
+    <div class="pstep" onclick="setStage(2,this)"><span class="pstep-num">2</span>Assume</div>
+    <div class="pstep" onclick="setStage(3,this)"><span class="pstep-num">3</span>Full OAT</div>
+    <div class="pstep" onclick="setStage(4,this)"><span class="pstep-num">4</span>Live Fire</div>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div id="stage-1" class="stage-content">
+    <div class="drill-card">
+      <div class="card-eyebrow">Stage 1 — Pure Observation</div>
+      <div style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:18px;">
+        Notice one <strong style="color:var(--text)">specific, neutral detail</strong> about the scene. Not "she's pretty" — the way she's holding her drink, the earring she keeps touching, the expression when her friend talks. Just observe. No assumption yet.
+      </div>
+
+      <div class="card-eyebrow" style="margin-bottom:6px;">Scenario</div>
+      <div class="observation-box" id="s1-scenario">
+        <div class="obs-context" id="s1-context"></div>
+        <span id="s1-text">Hit "New Scene" to get your first scenario.</span>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px;">
+        <div class="input-label"><span class="step-dot obs">1</span> Your Observation</div>
+        <textarea class="input-field" id="s1-obs" placeholder="Describe exactly what you notice — one specific detail, totally neutral…" rows="2"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="newScene(1)">↺ New Scene</button>
+        <button class="btn btn-ghost" onclick="saveRep(1)">+ Log Rep</button>
+      </div>
+    </div>
+
+    <div class="example-reveal">
+      <button class="example-toggle" onclick="toggleExample(this)">▸ See example observations</button>
+      <div class="example-content">
+        <div class="example-line"><em>Scene:</em> She keeps adjusting the same earring every 2 mins<br><strong>Obs: "You keep going back to that same earring."</strong></div>
+        <div class="example-line"><em>Scene:</em> She's laughing but watching the door<br><strong>Obs: "You're laughing but you keep checking the entrance."</strong></div>
+        <div class="example-line"><em>Scene:</em> Drink barely touched, just holding it<br><strong>Obs: "You've been holding that drink for 10 minutes without touching it."</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div id="stage-2" class="stage-content" style="display:none">
+    <div class="drill-card">
+      <div class="card-eyebrow">Stage 2 — Observation → Assumption</div>
+      <div style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:18px;">
+        Take the observation and make the creative leap. Ask yourself: <em style="color:var(--text)">"What kind of person does this behavior suggest?"</em> — then exaggerate it by 30%. Generate <strong style="color:var(--text)">3 versions</strong>: realistic, slightly absurd, fully ridiculous. The one you'd use is usually the middle one.
+      </div>
+
+      <div class="observation-box" id="s2-scenario">
+        <div class="obs-context" id="s2-context"></div>
+        <span id="s2-text">Hit "New Observation" to start.</span>
+      </div>
+
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="input-label" style="color:#777">A — Realistic</div>
+        <textarea class="input-field" id="s2-a" placeholder="Most plausible interpretation…" rows="2"></textarea>
+      </div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="input-label"><span class="step-dot ass">★</span> B — Slightly Absurd <span style="color:var(--accent);font-size:9px;">(USE THIS ONE)</span></div>
+        <textarea class="input-field" id="s2-b" placeholder="Exaggerated by 30% — almost plausible but funnier…" rows="2" style="border-color:rgba(240,192,64,0.3)"></textarea>
+      </div>
+      <div class="form-row" style="margin-bottom:14px;">
+        <div class="input-label" style="color:#777">C — Fully Ridiculous</div>
+        <textarea class="input-field" id="s2-c" placeholder="Way over the top — for loosening up your brain…" rows="2"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="newScene(2)">↺ New Observation</button>
+        <button class="btn btn-ghost" onclick="saveRep(2)">+ Log Rep</button>
+      </div>
+    </div>
+
+    <div class="example-reveal">
+      <button class="example-toggle" onclick="toggleExample(this)">▸ See example assumptions</button>
+      <div class="example-content">
+        <div class="example-line"><em>Obs:</em> She's on her phone a lot<br><strong>A: "Waiting on an important text"</strong><br><strong>B: "Live-updating her fan club on the evening's events" ←</strong><br><strong>C: "Coordinating a heist"</strong></div>
+        <div class="example-line"><em>Obs:</em> Orders water at a bar<br><strong>A: "Being responsible tonight"</strong><br><strong>B: "Either the most disciplined person here or she lost a bet" ←</strong><br><strong>C: "Training for a dehydration world record"</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3 -->
+  <div id="stage-3" class="stage-content" style="display:none">
+    <div class="drill-card">
+      <div class="card-eyebrow">Stage 3 — Full OAT + Delivery</div>
+      <div style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:18px;">
+        All three steps. Keep the tease <strong style="color:var(--text)">short — one sentence max</strong>. Soft nickname or mock-warning. The assumption does the work. The tease just lands it. <em style="color:var(--accent)">Say it out loud while writing.</em>
+      </div>
+
+      <div class="observation-box" id="s3-scenario">
+        <div class="obs-context" id="s3-context"></div>
+        <span id="s3-text">Hit "New Scene" to start.</span>
+      </div>
+
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="input-label"><span class="step-dot obs">O</span> Observation</div>
+        <textarea class="input-field" id="s3-obs" placeholder="Neutral, specific, 1 sentence…" rows="2"></textarea>
+      </div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="input-label"><span class="step-dot ass">A</span> Assumption</div>
+        <textarea class="input-field" id="s3-ass" placeholder="The slightly absurd creative leap…" rows="2"></textarea>
+      </div>
+      <div class="form-row" style="margin-bottom:6px;">
+        <div class="input-label"><span class="step-dot tease">T</span> Tease</div>
+        <textarea class="input-field" id="s3-tease" placeholder="Short. One sentence. Soft nickname or mock-warning…" rows="2"></textarea>
+      </div>
+
+      <div class="stars-row" id="s3-stars">
+        <span style="font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-right:4px;">Rate it</span>
+        <span class="star" onclick="setRating(3,1)">★</span>
+        <span class="star" onclick="setRating(3,2)">★</span>
+        <span class="star" onclick="setRating(3,3)">★</span>
+        <span class="star" onclick="setRating(3,4)">★</span>
+        <span class="star" onclick="setRating(3,5)">★</span>
+        <span class="rating-desc" id="s3-rating-desc">—</span>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px;">
+        <div class="input-label">Quick note (optional)</div>
+        <textarea class="input-field" id="s3-note" placeholder="What worked? What felt forced? Did the delivery hold?" rows="2"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="newScene(3)">↺ New Scene</button>
+        <button class="btn btn-ghost" onclick="saveRep(3)">+ Log Rep</button>
+      </div>
+    </div>
+
+    <div class="example-reveal">
+      <button class="example-toggle" onclick="toggleExample(this)">▸ See full OAT examples</button>
+      <div class="example-content">
+        <div class="example-line">
+          <em>O:</em> <strong>"You've been holding that drink for 10 minutes."</strong><br>
+          <em>A:</em> <strong>"You're either deep in thought or you forgot it exists."</strong><br>
+          <em>T:</em> <strong>"Careful, that cocktail's starting to feel neglected."</strong>
+        </div>
+        <div class="example-line">
+          <em>O:</em> <strong>"You keep glancing at the door."</strong><br>
+          <em>A:</em> <strong>"Your friends abandoned you and you're pretending you planned it this way."</strong><br>
+          <em>T:</em> <strong>"It's okay — solo ops require focus."</strong>
+        </div>
+        <div class="example-line">
+          <em>O:</em> <strong>"You laughed before she even finished the sentence."</strong><br>
+          <em>A:</em> <strong>"You already know where every story is going — you're the chaos instigator in this group."</strong><br>
+          <em>T:</em> <strong>"Careful, giggles."</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 4 -->
+  <div id="stage-4" class="stage-content" style="display:none">
+    <div class="drill-card">
+      <div class="card-eyebrow">Stage 4 — Live Fire</div>
+      <div style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:18px;">
+        <strong style="color:var(--accent)">10 seconds.</strong> No writing first. Say the full OAT out loud before the timer ends. Rule: you have <strong style="color:var(--text)">3 seconds</strong> after seeing the scene to say the observation. Don't think — speak.
+      </div>
+
+      <div class="observation-box" id="s4-scenario">
+        <div class="obs-context" id="s4-context"></div>
+        <span id="s4-text">Ready? Hit Start.</span>
+      </div>
+
+      <!-- TIMER -->
+      <div class="timer-wrap" id="timer-wrap">
+        <div class="timer-ring">
+          <svg viewBox="0 0 64 64">
+            <circle class="ring-bg" cx="32" cy="32" r="26"/>
+            <circle class="ring-fill" id="ring-fill" cx="32" cy="32" r="26"/>
+          </svg>
+          <div class="timer-num" id="timer-num">10</div>
+        </div>
+        <div class="timer-info">
+          <div class="timer-phase" id="timer-phase">Ready</div>
+          <div class="timer-hint" id="timer-hint">Hit Start — then speak immediately when the scene loads</div>
+        </div>
+      </div>
+
+      <div class="stars-row" id="s4-stars">
+        <span style="font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-right:4px;">Rate it</span>
+        <span class="star" onclick="setRating(4,1)">★</span>
+        <span class="star" onclick="setRating(4,2)">★</span>
+        <span class="star" onclick="setRating(4,3)">★</span>
+        <span class="star" onclick="setRating(4,4)">★</span>
+        <span class="star" onclick="setRating(4,5)">★</span>
+        <span class="rating-desc" id="s4-rating-desc">—</span>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px;margin-top:6px;">
+        <div class="input-label">What you said (optional)</div>
+        <textarea class="input-field" id="s4-note" placeholder="Type what you said out loud — or just a quick note…" rows="2"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="start-btn" onclick="startLiveFire()">▶ Start</button>
+        <button class="btn btn-ghost" onclick="saveRep(4)">+ Log Rep</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LOG TAB -->
+<div id="tab-log" class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Rep History</div>
+    <button class="btn btn-danger" onclick="clearAll()" style="font-size:10px;padding:6px 12px;">Clear All</button>
+  </div>
+  <div id="log-list"></div>
+</div>
+
+<!-- STATS TAB -->
+<div id="tab-stats" class="section">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="mini-chart">
+    <div class="chart-label">Reps by Stage</div>
+    <div id="stage-chart"></div>
+  </div>
+  <div class="mini-chart">
+    <div class="chart-label">Average Rating by Stage</div>
+    <div id="rating-chart"></div>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+
+const scenes = {
+  bar: [
+    "She's been stirring her drink slowly for the past minute without looking at it.",
+    "She laughed before her friend finished the sentence.",
+    "She keeps glancing at the door every 30 seconds.",
+    "She's holding her phone face-down on the bar.",
+    "She's got a half-drunk cocktail she keeps pushing slightly away then pulling back.",
+    "She's nodding along but her eyes are wandering.",
+    "She adjusted her hair three times in the last two minutes.",
+    "She's the only one at the table not on her phone.",
+    "She's laughing loud — louder than everyone else in the group.",
+    "She ordered the most complicated thing on the menu without hesitating.",
+    "She's wearing one piece that doesn't match anything else she has on.",
+    "She keeps checking the time.",
+    "She's been at the bar alone for 4 minutes and looks completely unbothered.",
+    "She's making eye contact with everyone she passes.",
+    "She's got a book in a bar on a Friday night.",
+  ],
+  coffee: [
+    "She's been staring at her laptop screen for 5 minutes without typing.",
+    "She has three empty coffee cups stacked next to her.",
+    "She's typing fast, stops, deletes everything, starts again.",
+    "She's reading a physical book and taking notes in the margins.",
+    "She's laughing at her phone but looks around before she does.",
+    "She ordered a complicated drink and knew every modification by heart.",
+    "She's got headphones in but they're not plugged into anything.",
+    "She's people-watching harder than she's working.",
+    "She set 4 reminders on her phone in the last 10 minutes.",
+    "She moved tables twice since she got here.",
+  ],
+  street: [
+    "She's walking fast but stopping to check her phone every 20 steps.",
+    "She's carrying way more bags than one person should need.",
+    "She's talking to herself under her breath.",
+    "She said hi to a stranger's dog and completely ignored the owner.",
+    "She's wearing headphones but singing along quietly.",
+    "She stopped to take a photo of something completely ordinary.",
+    "She held the door for 6 people and counted under her breath.",
+    "She's dressed like she's going somewhere important at 2pm on a Tuesday.",
+  ],
+  gym: [
+    "She's been on the same warmup stretch for 10 minutes.",
+    "She's watching everyone else's form more than doing her own workout.",
+    "She brought a notebook to the gym.",
+    "She's mouthing the words to whatever's in her headphones.",
+    "She reset the same weight twice before actually lifting.",
+    "She's the most focused person in the room — doesn't look at anyone.",
+  ]
+};
+
+const allScenes = [].concat(...Object.values(scenes));
+
+const ratingLabels = ['', 'Froze completely', 'Weak but tried', 'Decent — got there', 'Solid delivery', 'Natural — felt effortless'];
+
+const stageNames = ['Observe', 'Assume', 'Full OAT', 'Live Fire'];
+
+// ─── STATE ──────────────────────────────────────────────
+
+let currentStage = 1;
+let ratings = { 3: 0, 4: 0 };
+let timerInterval = null;
+let timerVal = 10;
+let currentScene = { text: '', context: '' };
+
+function getEntries() {
+  try { return JSON.parse(localStorage.getItem('oat_entries') || '[]'); } catch { return []; }
+}
+
+function saveEntries(arr) {
+  localStorage.setItem('oat_entries', JSON.stringify(arr));
+}
+
+// ─── INIT ────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateTotalReps();
+  newScene(1);
+  renderLog();
+  renderStats();
+});
+
+// ─── TABS ────────────────────────────────────────────────
+
+function showTab(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'log') renderLog();
+  if (name === 'stats') renderStats();
+}
+
+// ─── STAGE ───────────────────────────────────────────────
+
+function setStage(n, el) {
+  currentStage = n;
+  document.querySelectorAll('.stage-content').forEach(s => s.style.display = 'none');
+  document.getElementById('stage-' + n).style.display = 'block';
+  document.querySelectorAll('.pstep').forEach((p, i) => {
+    p.classList.toggle('current', i + 1 === n);
+  });
+  newScene(n);
+}
+
+// ─── SCENES ──────────────────────────────────────────────
+
+function pickScene() {
+  const keys = Object.keys(scenes);
+  const ctx = keys[Math.floor(Math.random() * keys.length)];
+  const arr = scenes[ctx];
+  const text = arr[Math.floor(Math.random() * arr.length)];
+  return { text, context: ctx.toUpperCase() };
+}
+
+function newScene(stage) {
+  stopTimer();
+  currentScene = pickScene();
+  ['s1', 's2', 's3', 's4'].forEach(p => {
+    const t = document.getElementById(p + '-text');
+    const c = document.getElementById(p + '-context');
+    if (t) t.textContent = currentScene.text;
+    if (c) c.textContent = '📍 ' + currentScene.context;
+  });
+  // clear fields
+  ['s1-obs','s2-a','s2-b','s2-c','s3-obs','s3-ass','s3-tease','s3-note','s4-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ratings[3] = 0; ratings[4] = 0;
+  updateStars(3); updateStars(4);
+  if (stage === 4) resetTimer();
+}
+
+// ─── TIMER ───────────────────────────────────────────────
+
+const CIRCUMFERENCE = 2 * Math.PI * 26; // r=26
+
+function resetTimer() {
+  stopTimer();
+  timerVal = 10;
+  const fill = document.getElementById('ring-fill');
+  const num = document.getElementById('timer-num');
+  fill.style.strokeDashoffset = 0;
+  fill.style.stroke = 'var(--accent)';
+  num.textContent = '10';
+  num.style.color = 'var(--accent)';
+  document.getElementById('timer-phase').textContent = 'Ready';
+  document.getElementById('timer-hint').textContent = 'Hit Start — speak as soon as the scene loads';
+  document.getElementById('start-btn').textContent = '▶ Start';
+}
+
+function startLiveFire() {
+  newScene(4);
+  stopTimer();
+  timerVal = 10;
+  document.getElementById('start-btn').textContent = '↺ New Scene';
+  document.getElementById('start-btn').onclick = () => { newScene(4); startLiveFire(); };
+  document.getElementById('timer-phase').textContent = 'GO — speak now';
+  document.getElementById('timer-hint').textContent = 'Observation → Assumption → Tease. Out loud.';
+
+  const fill = document.getElementById('ring-fill');
+  const num = document.getElementById('timer-num');
+
+  timerInterval = setInterval(() => {
+    timerVal--;
+    num.textContent = timerVal;
+    const pct = timerVal / 10;
+    fill.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+
+    if (timerVal <= 3) {
+      fill.style.stroke = 'var(--red)';
+      num.style.color = 'var(--red)';
+      document.getElementById('timer-phase').textContent = timerVal === 0 ? 'Time — rate it' : 'Wrap it up';
+    }
+
+    if (timerVal <= 0) {
+      stopTimer();
+      document.getElementById('timer-phase').textContent = 'Done — rate & log';
+      document.getElementById('timer-hint').textContent = 'How did the delivery feel?';
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+// ─── RATING ──────────────────────────────────────────────
+
+function setRating(stage, val) {
+  ratings[stage] = val;
+  updateStars(stage);
+}
+
+function updateStars(stage) {
+  const container = document.getElementById('s' + stage + '-stars');
+  if (!container) return;
+  container.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('lit', i < ratings[stage]);
+  });
+  const desc = document.getElementById('s' + stage + '-rating-desc');
+  if (desc) desc.textContent = ratingLabels[ratings[stage]] || '—';
+}
+
+// ─── SAVE REP ────────────────────────────────────────────
+
+function saveRep(stage) {
+  const entries = getEntries();
+
+  let entry = {
+    id: Date.now(),
+    stage,
+    stageName: stageNames[stage - 1],
+    scene: currentScene.text,
+    context: currentScene.context,
+    rating: ratings[stage] || 0,
+    ts: new Date().toISOString(),
+  };
+
+  if (stage === 1) entry.obs = document.getElementById('s1-obs').value.trim();
+  if (stage === 2) {
+    entry.a = document.getElementById('s2-a').value.trim();
+    entry.b = document.getElementById('s2-b').value.trim();
+    entry.c = document.getElementById('s2-c').value.trim();
+  }
+  if (stage === 3) {
+    entry.obs = document.getElementById('s3-obs').value.trim();
+    entry.ass = document.getElementById('s3-ass').value.trim();
+    entry.tease = document.getElementById('s3-tease').value.trim();
+    entry.note = document.getElementById('s3-note').value.trim();
+    entry.rating = ratings[3];
+  }
+  if (stage === 4) {
+    entry.note = document.getElementById('s4-note').value.trim();
+    entry.rating = ratings[4];
+  }
+
+  entries.unshift(entry);
+  saveEntries(entries);
+  updateTotalReps();
+  showToast('Rep logged ✓');
+  newScene(stage);
+}
+
+function updateTotalReps() {
+  document.getElementById('total-reps').textContent = getEntries().length;
+}
+
+// ─── LOG ─────────────────────────────────────────────────
+
+function renderLog() {
+  const entries = getEntries();
+  const container = document.getElementById('log-list');
+
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty"><strong>No reps yet</strong>Head to the Drill tab and log your first rep</div>';
+    return;
+  }
+
+  container.innerHTML = entries.map(e => {
+    const stars = '★'.repeat(e.rating) + '☆'.repeat(5 - e.rating);
+    const time = new Date(e.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+
+    let body = '';
+    if (e.stage === 1 && e.obs) {
+      body = `<div class="entry-obs">"${e.obs}"</div>`;
+    }
+    if (e.stage === 2) {
+      body = `<div class="entry-response">
+        <div class="entry-part"><div class="entry-part-label">Realistic</div>${e.a || '—'}</div>
+        <div class="entry-part"><div class="entry-part-label" style="color:var(--accent)">★ Absurd</div>${e.b || '—'}</div>
+      </div>`;
+    }
+    if (e.stage === 3) {
+      body = `<div class="entry-response">
+        <div class="entry-part"><div class="entry-part-label">Obs</div>${e.obs || '—'}</div>
+        <div class="entry-part"><div class="entry-part-label">Assumption</div>${e.ass || '—'}</div>
+      </div>
+      ${e.tease ? `<div class="entry-obs" style="margin-top:6px;">Tease: "${e.tease}"</div>` : ''}`;
+    }
+    if (e.note) body += `<div class="entry-note">${e.note}</div>`;
+
+    return `<div class="entry" id="e${e.id}">
+      <button class="entry-del" onclick="deleteEntry(${e.id})">✕</button>
+      <div class="entry-top">
+        <div class="entry-left">
+          <div class="entry-stars">${stars}</div>
+          <div class="entry-tags">
+            <span class="etag stage${e.stage}">${e.stageName}</span>
+            <span class="etag">${e.context}</span>
+          </div>
+        </div>
+        <div class="entry-time">${time}</div>
+      </div>
+      <div class="entry-obs" style="color:var(--muted)">${e.scene}</div>
+      ${body}
+    </div>`;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  const entries = getEntries().filter(e => e.id !== id);
+  saveEntries(entries);
+  updateTotalReps();
+  renderLog();
+  renderStats();
+}
+
+function clearAll() {
+  if (confirm('Clear all reps?')) {
+    localStorage.removeItem('oat_entries');
+    updateTotalReps();
+    renderLog();
+    renderStats();
+  }
+}
+
+// ─── STATS ───────────────────────────────────────────────
+
+function renderStats() {
+  const entries = getEntries();
+  const grid = document.getElementById('stats-grid');
+
+  const avgRating = entries.filter(e => e.rating > 0).length
+    ? (entries.filter(e => e.rating > 0).reduce((a, e) => a + e.rating, 0) / entries.filter(e => e.rating > 0).length).toFixed(1)
+    : '—';
+
+  const today = new Date().toDateString();
+  const todayReps = entries.filter(e => new Date(e.ts).toDateString() === today).length;
+
+  const best = entries.filter(e => e.rating === 5).length;
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-num yellow">${entries.length}</div><div class="stat-lbl">Total Reps</div></div>
+    <div class="stat-card"><div class="stat-num">${todayReps}</div><div class="stat-lbl">Today</div></div>
+    <div class="stat-card"><div class="stat-num green">${avgRating}</div><div class="stat-lbl">Avg Rating</div></div>
+  `;
+
+  // stage counts
+  const stageCounts = [0,0,0,0];
+  entries.forEach(e => stageCounts[e.stage - 1]++);
+  const maxStage = Math.max(...stageCounts, 1);
+
+  document.getElementById('stage-chart').innerHTML = stageNames.map((n, i) =>
+    `<div class="bar-row">
+      <div class="bar-name">${n}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stageCounts[i]/maxStage)*100}%"></div></div>
+      <div class="bar-count">${stageCounts[i]}</div>
+    </div>`
+  ).join('');
+
+  // avg rating by stage
+  const stageRatings = stageNames.map((_, i) => {
+    const rated = entries.filter(e => e.stage === i+1 && e.rating > 0);
+    return rated.length ? rated.reduce((a,e)=>a+e.rating,0)/rated.length : 0;
+  });
+  const maxR = Math.max(...stageRatings, 1);
+
+  document.getElementById('rating-chart').innerHTML = stageNames.map((n, i) =>
+    `<div class="bar-row">
+      <div class="bar-name">${n}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stageRatings[i]/5)*100}%;background:var(--${stageRatings[i]>=4?'green':stageRatings[i]>=2?'accent':'red'})"></div></div>
+      <div class="bar-count">${stageRatings[i] ? stageRatings[i].toFixed(1) : '—'}</div>
+    </div>`
+  ).join('');
+}
+
+// ─── UTILS ───────────────────────────────────────────────
+
+function toggleExample(btn) {
+  const content = btn.nextElementSibling;
+  const open = content.classList.toggle('open');
+  btn.textContent = (open ? '▾' : '▸') + btn.textContent.slice(1);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
